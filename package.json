@@ -1,0 +1,17 @@
+
+  "name": "Siika Designs by Jamellah",
+  "version": "0.0.1",
+  "license": "MIT License",
+  "private": "true",
+  "description": "A collection of modern African-inspired fashion apparel design by Jamellah Siika",
+  "main": "index.js",
+  "browser":"chrome"
+  "entry-file": "index.html"
+  "root": "public"
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "jokes" : "0.1.3"
+  }
+}
