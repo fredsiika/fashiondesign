@@ -1,5 +1,5 @@
 /*
- * Primary file for API
+ * (Updated) Primary file for API
  *
  */
 
@@ -7,6 +7,7 @@
 var http = require('http');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
+var config = require('./config');
 
  // Configure the server to respond to all requests with a string
 var server = http.createServer(function(req,res){
