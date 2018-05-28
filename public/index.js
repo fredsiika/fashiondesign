@@ -1,87 +1,119 @@
 /*
- * Primary file for API
+ * (Updated) Primary file for API
  *
  */
 
 // Dependencies
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
+var config = require('./config');
+var fs = require('fs');
+var _data = require('../lib/data');
 
- // Configure the server to respond to all requests with a string
-var server = http.createServer(function(req,res){
-
-  // Parse the url
-  var parsedUrl = url.parse(req.url, true);
-
-  // Get the path
-  var path = parsedUrl.pathname;
-  var trimmedPath = path.replace(/^\/+|\/+$/g, '');
-
-  // Get the query string as an object
-  var queryStringObject = parsedUrl.query;
-
-  // Get the HTTP method
-  var method = req.method.toLowerCase();
-
-  //Get the headers as an object
-  var headers = req.headers;
-
-  // Get the payload,if any
-  var decoder = new StringDecoder('utf-8');
-  var buffer = '';
-  req.on('data', function(data) {
-      buffer += decoder.write(data);
-  });
-  req.on('end', function() {
-      buffer += decoder.end();
-
-      // Check the router for a matching path for a handler. If one is not found, use the notFound handler instead.
-      var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
-
-      // Construct the data object to send to the handler
-      var data = {
-        'trimmedPath' : trimmedPath,
-        'queryStringObject' : queryStringObject,
-        'method' : method,
-        'headers' : headers,
-        'payload' : buffer
-      };
-
-      // Route the request to the handler specified in the router
-      chosenHandler(data,function(statusCode,payload){
-
-        // Use the status code returned from the handler, or set the default status code to 200
-        statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
-
-        // Use the payload returned from the handler, or set the default payload to an empty object
-        payload = typeof(payload) == 'object'? payload : {};
-
-        // Convert the payload to a string
-        var payloadString = JSON.stringify(payload);
-
-        // Return the response
-        res.writeHead(statusCode);
-        res.end(payloadString);
-        console.log('\[\033[01;38;5;42m\ Returning this response: ', statusCode, payloadString);
-
-      });
-
-  });
+// TESTING
+// @TODO delete this
+_data.update('test','newFile',{'Young':'Fred'},function(err){
+    console.log('This was an error',err);
 });
 
-// Start the server
-server.listen(3000,function(){
-    console.log("\[\033[01;38;5;42m\ > Server connection to localhost = \033[01;38;5;123m\ success...\033[0m \n" +
-    "\[\033[01;38;5;42m\ > Listening on port: \033[05;38;5;123m 3000.\033[0m");
+ // Instantiate the HTTP server
+var httpServer = http.createServer(function(req,res){
+    unifiedServer(req,res);
 });
+
+// Start the HTTP Server
+httpServer.listen(config.httpPort,function(){
+    console.log('\[\033[01;38;5;42m\ Connection to localhost servers is a Success! \n'+
+        '\033[01;38;5;123m  > HTTP server \033[0m is running on port \033[01;38;5;042m'+config.httpPort+ ' \033[05;38;5;042m\. . .\033[0m');
+});
+
+// Instantiate the HTTPS server
+var httpsServerOptions = {
+    'key': fs.readFileSync('../https/key.pem'),
+    'cert': fs.readFileSync('../https/cert.pem')
+};
+
+var httpsServer = https.createServer(httpsServerOptions,function(req,res){
+    unifiedServer(req,res);
+});
+
+// Start the HTTPS server
+httpsServer.listen(config.httpsPort,function(){
+    console.log('\033[01;38;5;092m  > HTTPS server \033[0m is running on port \033[01;38;5;092m' +config.httpsPort+ ' \033[05;38;5;092m\. . .\033[0m');
+});
+
+// All the server logic for both the http and https Server
+var unifiedServer = function(req,res){
+
+    // Parse the url
+    var parsedUrl = url.parse(req.url, true);
+
+    // Get the path
+    var path = parsedUrl.pathname;
+    var trimmedPath = path.replace(/^\/+|\/+$/g, '');
+
+    // Get the query string as an object
+    var queryStringObject = parsedUrl.query;
+
+    // Get the HTTP method
+    var method = req.method.toLowerCase();
+
+    //Get the headers as an object
+    var headers = req.headers;
+
+    // Get the payload,if any
+    var decoder = new StringDecoder('utf-8');
+    var buffer = '';
+    req.on('data', function(data) {
+        buffer += decoder.write(data);
+    });
+    req.on('end', function() {
+        buffer += decoder.end();
+
+        // Check the router for a matching path for a handler. If one is not found, use the notFound handler instead.
+        var chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+
+        // Construct the data object to send to the handler
+        var data = {
+          'trimmedPath' : trimmedPath,
+          'queryStringObject' : queryStringObject,
+          'method' : method,
+          'headers' : headers,
+          'payload' : buffer
+        };
+
+        // Route the request to the handler specified in the router
+        chosenHandler(data,function(statusCode,payload){
+
+          // Use the status code returned from the handler, or set the default status code to 200
+          statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+
+          // Use the payload returned from the handler, or set the default payload to an empty object
+          payload = typeof(payload) == 'object'? payload : {};
+
+          // Convert the payload to a string
+          var payloadString = JSON.stringify(payload);
+
+          // Return the response
+          res.setHeader('Content-Type', 'application/json');
+          res.writeHead(statusCode);
+          res.end(payloadString);
+          console.log('Returning this response: \"\033[01;38;5;42m\"', statusCode, payloadString);
+
+        });
+
+    });
+
+};  //End of unifiedServer function
 
 // Define all the handlers
 var handlers = {};
 
-// Sample handler
-handlers.sample = function(data,callback){
-    callback(406,{'name':'sample handler'});
+// Ping handler
+handlers.ping = function(data,callback){
+    callback(200);
 };
 
 // Not found handler
@@ -91,5 +123,5 @@ handlers.notFound = function(data,callback){
 
 // Define the request router
 var router = {
-  'sample' : handlers.sample
+  'ping': handlers.ping
 };
