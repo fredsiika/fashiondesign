@@ -10,6 +10,13 @@ var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 var config = require('./config');
 var fs = require('fs');
+var _data = require('../lib/data');
+
+// TESTING
+// @TODO delete this
+_data.update('test','newFile',{'Young':'Fred'},function(err){
+    console.log('This was an error',err);
+});
 
  // Instantiate the HTTP server
 var httpServer = http.createServer(function(req,res){
@@ -93,7 +100,7 @@ var unifiedServer = function(req,res){
           res.setHeader('Content-Type', 'application/json');
           res.writeHead(statusCode);
           res.end(payloadString);
-          console.log('\[\033[01;38;5;42m\ Returning this response: ', statusCode, payloadString);
+          console.log('Returning this response: \"\033[01;38;5;42m\"', statusCode, payloadString);
 
         });
 
@@ -106,7 +113,7 @@ var handlers = {};
 
 // Ping handler
 handlers.ping = function(data,callback){
-    callback('\033[01;38;5;42m', 200);
+    callback(200);
 };
 
 // Not found handler
